@@ -71,10 +71,6 @@ class User(UserMixin, db.Model):
     comments = relationship("Comment", back_populates="comment_author")
 
 
-# CREATE ALL THE TABLES IN THE DATABASE
-# db.create_all()
-
-
 # CONFIGURE TABLES
 class BlogPost(db.Model):
     __tablename__ = "blog_posts"
@@ -90,9 +86,6 @@ class BlogPost(db.Model):
     img_url = db.Column(db.String(250), nullable=False)
 
     comments = relationship("Comment", back_populates="parent_post")
-
-
-# db.create_all()
 
 
 # CREATING COMMENTS TABLE
@@ -112,7 +105,7 @@ class Comment(db.Model):
     text = db.Column(db.Text, nullable=False)
 
 
-# db.create_all()
+db.create_all()
 
 
 # DISPLAYING THE CURRENT YEAR ON THE WEBPAGE

@@ -1,7 +1,7 @@
 import os
 from datetime import datetime as dt
 
-from flask import Flask, render_template, redirect, url_for, flash, abort
+from flask import Flask, render_template, redirect, url_for, flash, abort, request
 from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor
 from datetime import date
@@ -12,6 +12,7 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, cur
 from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
 from flask_gravatar import Gravatar
 from functools import wraps
+from flask_mail import Mail, Message
 
 
 app = Flask(__name__)
@@ -35,6 +36,14 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("POSTGRES_DATABASE_URL", 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USERNAME'] = os.environ.get("GMAIL_USERID")
+app.config['MAIL_PASSWORD'] = os.environ.get("GMAIL_USER_PASSWORD")
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
+
+mail = Mail(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -218,9 +227,25 @@ def about():
     return render_template("about.html", current_user=current_user, year=CURRENT_YEAR)
 
 
-@app.route("/contact")
+@app.route("/contact", methods=["GET", "POST"])
 def contact():
-    return render_template("contact.html", current_user=current_user, year=CURRENT_YEAR)
+    if request.method == "GET":
+        return render_template("contact.html", current_user=current_user, year=CURRENT_YEAR)
+    else:
+        name = request.form.get("name")
+        email = request.form.get("email")
+        phone = request.form.get("phone")
+        message = request.form.get("message")
+
+        msg = Message(
+            subject=f"Subhajit's Blog - New Mail from {name}",
+            body=f"Name: {name}\nE-Mail: {email}\nPhone: {phone}\n\nIP-Address: {request.remote_addr}\n"
+                 f"IP-User: {request.remote_user}\nDate: {dt.now()}\n\nMessage: {message}",
+            sender=email,
+            recipients=[os.environ.get("GMAIL_USERID")]
+        )
+        mail.send(msg)
+        return render_template("contact.html", current_user=current_user, year=CURRENT_YEAR, success=True)
 
 
 @app.route("/new-post", methods=["POST", "GET"])

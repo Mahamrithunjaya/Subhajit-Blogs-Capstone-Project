@@ -322,5 +322,24 @@ def delete_comment(post_id, comment_id):
 #
 # ######################################################################################
 
+
+@app.route("/number-of-users-view")
+@login_required
+@admin_only
+def show_users_list():
+    all_users = User.query.all()
+    return render_template("users-list.html", users=all_users)
+
+
+@app.route("/delete-user/<int:user_id>")
+@login_required
+def delete_user(user_id):
+    user_to_delete = User.query.get(user_id)
+    comments_to_delete = Comment.query.filter_by(author_id=user_id).delete()
+    db.session.delete(user_to_delete)
+    db.session.commit()
+    return redirect(url_for("show_users_list", user_id=user_id))
+
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
